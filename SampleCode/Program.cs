@@ -185,7 +185,7 @@ namespace Sherweb.SampleCode
                     {
                         case (int)MainMenu.ServiceProviderOption.GetCustomers:
                         {
-                            subscriptionService.GetCustomers();
+                            subscriptionService.GetCustomers(_acceptLanguageHeader);
                             break;
                         }
                         case (int)MainMenu.ServiceProviderOption.GetSubscriptions:
@@ -194,7 +194,7 @@ namespace Sherweb.SampleCode
                             var customerId = Console.ReadLine();
                             if (!string.IsNullOrWhiteSpace(customerId))
                             {
-                                subscriptionService.GetSubscriptions(new Guid(customerId));
+                                subscriptionService.GetSubscriptions(new Guid(customerId),_acceptLanguageHeader);
                             }
 
                             break;
@@ -205,7 +205,7 @@ namespace Sherweb.SampleCode
                             var subscriptionsAmendmentId = Console.ReadLine();
                             if (!string.IsNullOrWhiteSpace(subscriptionsAmendmentId))
                             {
-                                subscriptionService.GetAmendmentStatus(new Guid(subscriptionsAmendmentId));
+                                subscriptionService.GetAmendmentStatus(new Guid(subscriptionsAmendmentId),_acceptLanguageHeader);
                             }
 
                             break;

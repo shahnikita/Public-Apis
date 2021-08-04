@@ -14,7 +14,7 @@ namespace Sherweb.SampleCode
             _serviceProviderClient = serviceProviderClient;
         }
 
-        public void GetSubscriptions(Guid customerId)
+        public void GetSubscriptions(Guid customerId, string acceptLanguageHeader)
         {
             Console.WriteLine();
             Console.WriteLine("CUSTOMER SUBSCRIPTIONS");
@@ -22,7 +22,7 @@ namespace Sherweb.SampleCode
 
             try
             {
-                subscriptions = _serviceProviderClient.GetCustomerSubscriptions(customerId);
+                subscriptions = _serviceProviderClient.GetCustomerSubscriptions(customerId, acceptLanguage: acceptLanguageHeader);
             }
             catch (Exception exception)
             {
@@ -42,7 +42,7 @@ namespace Sherweb.SampleCode
             }
         }
 
-        public void AmendSubscriptions(Guid customerId, List<SubscriptionsAmendmentParameters> body)
+        public void AmendSubscriptions(Guid customerId, List<SubscriptionsAmendmentParameters> body, string acceptLanguageHeader)
         {
             Console.WriteLine();
             Console.WriteLine("AMEND SUBSCRIPTION");
@@ -50,7 +50,7 @@ namespace Sherweb.SampleCode
 
             try
             {
-                subscriptionsAmendment = _serviceProviderClient.CreateSubscriptionsAmendment(customerId, body);
+                subscriptionsAmendment = _serviceProviderClient.CreateSubscriptionsAmendment(customerId, body, acceptLanguage: acceptLanguageHeader);
             }
             catch (Exception exception)
             {
@@ -64,7 +64,7 @@ namespace Sherweb.SampleCode
             Console.WriteLine($"subscriptionsAmendmentId: {subscriptionsAmendment.SubscriptionsAmendmentId}");
         }
 
-        public void GetAmendmentStatus(Guid subscriptionsAmendmentId)
+        public void GetAmendmentStatus(Guid subscriptionsAmendmentId, string acceptLanguageHeader)
         {
             Console.WriteLine();
             Console.WriteLine("AMEND SUBSCRIPTION STATUS");
@@ -72,7 +72,7 @@ namespace Sherweb.SampleCode
 
             try
             {
-                subscriptionsAmendmentStatus = _serviceProviderClient.GetSubscriptionsAmendmentStatus(subscriptionsAmendmentId);
+                subscriptionsAmendmentStatus = _serviceProviderClient.GetSubscriptionsAmendmentStatus(subscriptionsAmendmentId, acceptLanguage: acceptLanguageHeader);
             }
             catch (Exception exception)
             {
@@ -86,7 +86,7 @@ namespace Sherweb.SampleCode
             Console.WriteLine($"status => {subscriptionsAmendmentStatus}");
         }
 
-        public void GetCustomers()
+        public void GetCustomers(string acceptLanguageHeader)
         {
             Console.WriteLine();
             Console.WriteLine("CUSTOMERS");
@@ -94,7 +94,7 @@ namespace Sherweb.SampleCode
 
             try
             {
-                customers = _serviceProviderClient.GetCustomers(acceptLanguage: null);
+                customers = _serviceProviderClient.GetCustomers(acceptLanguage: acceptLanguageHeader);
             }
             catch (Exception exception)
             {
@@ -110,6 +110,5 @@ namespace Sherweb.SampleCode
                 Console.WriteLine($"{nameof(customer.DisplayName)} => {customer.DisplayName}");
             }
         }
-
     }
 }

@@ -6,9 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Sherweb.Apis.Authorization" Version="1.0.0" />
-	  <PackageReference Include="Sherweb.Apis.Distributor" Version="1.1.0" />
-	  <PackageReference Include="Sherweb.Apis.ServiceProvider" Version="1.0.0-alpha3" />
+    <PackageReference Include="Sherweb.Apis.Authorization" Version="1.0.0" />
+    <PackageReference Include="Sherweb.Apis.Distributor" Version="1.1.0" />
+    <PackageReference Include="Sherweb.Apis.ServiceProvider" Version="1.0.0-beta01" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NugetPackagesSourceCode\Sherweb.Apis.ServiceProvider\Sherweb.Apis.ServiceProvider.csproj" />
   </ItemGroup>
 
 </Project>
