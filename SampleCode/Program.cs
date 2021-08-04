@@ -1,7 +1,6 @@
 #region
 
 using System;
-
 using Microsoft.Rest;
 
 using Sherweb.Apis.Authorization;
@@ -28,25 +27,17 @@ namespace Sherweb.SampleCode
 
         private static AuthorizationService _authorizationClient;
 
-        private static IDistributorService _distributorClient;
-
-        private static IServiceProviderService _serviceProviderClient;
-
-        private static SubscriptionService _subscriptionService;
-
-        private static DistributorService _distributionService;
-
         private static int _selectedMenuOptions;
 
         private static readonly MainMenu _menu = new MainMenu();
 
-        private static void Main(string[] args)
+        static void Main(string[] args)
         {
-            _baseUrl = "https://apim-test-sherweb.azure-api.net";
-
-            _clientId = "e60ee65d-b1b0-4d4f-abc7-2bb0c3eb4997";
-            _clientSecret = "F42w8W-yUNaUCv-BEtcamQunhFp0_svRT-cff6qU";
-            _subscriptionKey = "074497deb67d4d95924b5428160f01e7";
+            _baseUrl = "https://api.sherweb.com";
+            
+            _clientId = "your client id";
+            _clientSecret = "your client secret";
+            _subscriptionKey = "your subscription key";
 
             // Optional. This should follow [RFC 7231, section 5.3.5: Accept-Language]: https://tools.ietf.org/html/rfc7231#section-5.3.5
             // Example: en, en-CA;q=0.8, fr-CA;q=0.7
@@ -146,8 +137,8 @@ namespace Sherweb.SampleCode
 
         private static void ProcessDistribution()
         {
-            _distributorClient = BuildDistributorClient();
-            _distributionService = new DistributorService(_distributorClient);
+            var distributorClient = BuildDistributorClient();
+            var distributionService = new DistributionService(distributorClient);
             while (true)
             {
                 _menu.PrintMenu(new MainMenu.DistributorOption());
@@ -158,7 +149,7 @@ namespace Sherweb.SampleCode
                     {
                         case (int)MainMenu.DistributorOption.GetPayableCharges:
                         {
-                            _distributionService.GetPayableCharges();
+                            distributionService.ShowPayableCharges(_acceptLanguageHeader);
                             break;
                         }
                         case 0:
@@ -181,8 +172,8 @@ namespace Sherweb.SampleCode
 
         private static void ProcessServiceProvider()
         {
-            _serviceProviderClient = BuildServiceProviderClient();
-            _subscriptionService = new SubscriptionService(_serviceProviderClient);
+            var serviceProviderClient = BuildServiceProviderClient();
+            var subscriptionService = new SubscriptionService(serviceProviderClient);
 
             while (true)
             {
@@ -194,7 +185,7 @@ namespace Sherweb.SampleCode
                     {
                         case (int)MainMenu.ServiceProviderOption.GetCustomers:
                         {
-                            _subscriptionService.GetCustomers();
+                            subscriptionService.GetCustomers();
                             break;
                         }
                         case (int)MainMenu.ServiceProviderOption.GetSubscriptions:
@@ -203,7 +194,7 @@ namespace Sherweb.SampleCode
                             var customerId = Console.ReadLine();
                             if (!string.IsNullOrWhiteSpace(customerId))
                             {
-                                _subscriptionService.GetSubscriptions(new Guid(customerId));
+                                subscriptionService.GetSubscriptions(new Guid(customerId));
                             }
 
                             break;
@@ -214,7 +205,7 @@ namespace Sherweb.SampleCode
                             var subscriptionsAmendmentId = Console.ReadLine();
                             if (!string.IsNullOrWhiteSpace(subscriptionsAmendmentId))
                             {
-                                _subscriptionService.GetAmendmentStatus(new Guid(subscriptionsAmendmentId));
+                                subscriptionService.GetAmendmentStatus(new Guid(subscriptionsAmendmentId));
                             }
 
                             break;

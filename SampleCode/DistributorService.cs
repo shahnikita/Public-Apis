@@ -7,16 +7,16 @@ using Sherweb.Apis.ServiceProvider;
 
 namespace Sherweb.SampleCode
 {
-    public class DistributorService
+    public class DistributionService
     {
         private static IDistributorService _distributorClient;
 
-        public DistributorService(IDistributorService distributorService)
+        public DistributionService(IDistributorService distributorService)
         {
             _distributorClient = distributorService;
         }
 
-        public void GetPayableCharges()
+        public void ShowPayableCharges(string acceptLanguageHeader)
         {
             Console.WriteLine();
             Console.WriteLine("PAYABLE CHARGES");
@@ -24,7 +24,7 @@ namespace Sherweb.SampleCode
 
             try
             {
-                payableCharges = _distributorClient.GetPayableCharges(acceptLanguage: null);
+                payableCharges = _distributorClient.GetPayableCharges(acceptLanguage: acceptLanguageHeader);
             }
             catch (HttpOperationException exception)
             {
