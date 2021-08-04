@@ -1,32 +1,73 @@
+#region
+
 using System;
-using System.Linq;
+
 using Microsoft.Rest;
+
 using Sherweb.Apis.Authorization;
 using Sherweb.Apis.Distributor;
 using Sherweb.Apis.Distributor.Factory;
-using Sherweb.Apis.Distributor.Models;
+using Sherweb.Apis.ServiceProvider;
+using Sherweb.Apis.ServiceProvider.Factory;
+
+#endregion
 
 namespace Sherweb.SampleCode
 {
     public class Program
     {
-        static void Main(string[] args)
+        private static string _baseUrl;
+
+        private static string _clientId;
+
+        private static string _clientSecret;
+
+        private static string _subscriptionKey;
+
+        private static string _acceptLanguageHeader;
+
+        private static AuthorizationService _authorizationClient;
+
+        private static IDistributorService _distributorClient;
+
+        private static IServiceProviderService _serviceProviderClient;
+
+        private static SubscriptionService _subscriptionService;
+
+        private static DistributorService _distributionService;
+
+        private static int _selectedMenuOptions;
+
+        private static readonly MainMenu _menu = new MainMenu();
+
+        private static void Main(string[] args)
         {
-            const string baseUrl = "https://api.sherweb.com/distributor/v1";
-            const string clientId = "your client id";
-            const string clientSecret = "your client secret";
-            const string subscriptionKey = "your subscription key";
+            _baseUrl = "https://apim-test-sherweb.azure-api.net";
+
+            _clientId = "e60ee65d-b1b0-4d4f-abc7-2bb0c3eb4997";
+            _clientSecret = "F42w8W-yUNaUCv-BEtcamQunhFp0_svRT-cff6qU";
+            _subscriptionKey = "074497deb67d4d95924b5428160f01e7";
 
             // Optional. This should follow [RFC 7231, section 5.3.5: Accept-Language]: https://tools.ietf.org/html/rfc7231#section-5.3.5
             // Example: en, en-CA;q=0.8, fr-CA;q=0.7
-            const string acceptLanguageHeader = null;
-
+            _acceptLanguageHeader = null;
             // Get Bearer Token from Authorization API
-            var authorizationClient = new AuthorizationService(new Uri("https://api.sherweb.com/auth"));
+            _authorizationClient = new AuthorizationService(new Uri($"{_baseUrl}/auth"));
+            Console.Clear();
+            while (true)
+            {
+                _menu.PrintMenu(new MainMenu.MenuOptions());
+                ProcessMainMenu(Console.ReadLine());
+            }
+        }
 
-            var token = authorizationClient.TokenMethod(
-                clientId,
-                clientSecret,
+        private static IDistributorService BuildDistributorClient()
+        {
+            var apiUrl = $"{_baseUrl}/distributor/v1";
+
+            var token = _authorizationClient.TokenMethod(
+                _clientId,
+                _clientSecret,
                 "distributor", // Scope : distributor for Distributor API
                 "client_credentials");
 
@@ -35,42 +76,164 @@ namespace Sherweb.SampleCode
 
             var distributorConfiguration = new DistributorServiceConfiguration
             {
-                Uri = new Uri(baseUrl),
+                Uri = new Uri(apiUrl),
                 Credentials = credentials,
                 RetryCount = 0
             };
 
-            var distributorServiceFactory = new DistributorServiceFactory(distributorConfiguration,
-                new SubscriptionKeyHandler(subscriptionKey));
+            var distributorServiceFactory = new DistributorServiceFactory(
+                distributorConfiguration,
+                new SubscriptionKeyHandler(_subscriptionKey));
 
-            var distributorClient = distributorServiceFactory.Create();
-            
-            PayableCharges payableCharges = null;
-            
-            try
-            {
-                payableCharges = distributorClient.GetPayableCharges(acceptLanguage: acceptLanguageHeader);
-            }
-            catch (HttpOperationException exception)
-            {
-                // ProblemDetails returned by the API are handled and converted to a HttpOperationException in the ProblemDetailsHandler of the API Client
-                // https://github.com/sherweb/Public-Apis/blob/7bd9a0ecc37f0fbe3d9085c3e911ade3ca9a0c66/NugetPackagesSourceCode/Sherweb.Apis.Distributor/DelegatingHandlers/OnProblemDetailsHandler.cs
-                Console.WriteLine($"{nameof(exception.Message)}={exception.Message}");
-                return;
-            }
-            
-            Console.WriteLine($"{nameof(payableCharges.PeriodFrom)}={payableCharges.PeriodFrom}");
-            Console.WriteLine($"{nameof(payableCharges.PeriodTo)}={payableCharges.PeriodTo}");
+            return distributorServiceFactory.Create();
+        }
 
-            foreach (var charge in payableCharges.Charges)
+        private static IServiceProviderService BuildServiceProviderClient()
+        {
+            var apiUrl = $"{_baseUrl}/service-provider/v1";
+
+            var token = _authorizationClient.TokenMethod(
+                _clientId,
+                _clientSecret,
+                "service-provider",
+                "client_credentials");
+
+            var credentials = new TokenCredentials(token.AccessToken, "Bearer");
+
+            var serviceProviderConfiguration = new ServiceProviderServiceConfiguration
             {
-                var customerDisplayName = charge.Tags.SingleOrDefault(x => x.Name == "CustomerDisplayName")?.Value;
-                Console.WriteLine("-------------------------------------------------");
-                Console.WriteLine($"{nameof(customerDisplayName)}={customerDisplayName}");
-                Console.WriteLine($"{nameof(charge.ProductName)}={charge.ProductName}");
-                Console.WriteLine($"{nameof(charge.ChargeName)}={charge.ChargeName}");
-                Console.WriteLine($"{nameof(charge.Quantity)}={charge.Quantity}");
-                Console.WriteLine($"{nameof(charge.SubTotal)}={charge.SubTotal}");
+                Uri = new Uri(apiUrl),
+                Credentials = credentials,
+                RetryCount = 0
+            };
+
+            var serviceProviderServiceFactory = new ServiceProviderServiceFactory(
+                serviceProviderConfiguration,
+                new SubscriptionKeyHandler(_subscriptionKey));
+
+            return serviceProviderServiceFactory.Create();
+        }
+
+        public static void ProcessMainMenu(string input)
+        {
+            if (int.TryParse(input, out _selectedMenuOptions))
+            {
+                switch (_selectedMenuOptions)
+                {
+                    case (int)MainMenu.MenuOptions.Distributor:
+                    {
+                        ProcessDistribution();
+                        break;
+                    }
+                    case (int)MainMenu.MenuOptions.ServiceProvider:
+                    {
+                        ProcessServiceProvider();
+                        break;
+                    }
+                    case 0:
+                    {
+                        Environment.Exit(0);
+                        break;
+                    }
+                    default:
+                    {
+                        Console.WriteLine("Try again!!");
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void ProcessDistribution()
+        {
+            _distributorClient = BuildDistributorClient();
+            _distributionService = new DistributorService(_distributorClient);
+            while (true)
+            {
+                _menu.PrintMenu(new MainMenu.DistributorOption());
+                var input = Console.ReadLine();
+                if (int.TryParse(input, out _selectedMenuOptions))
+                {
+                    switch (_selectedMenuOptions)
+                    {
+                        case (int)MainMenu.DistributorOption.GetPayableCharges:
+                        {
+                            _distributionService.GetPayableCharges();
+                            break;
+                        }
+                        case 0:
+                        {
+                            return;
+                        }
+                        default:
+                        {
+                            Console.WriteLine("Try again!!");
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Try again!!");
+                }
+            }
+        }
+
+        private static void ProcessServiceProvider()
+        {
+            _serviceProviderClient = BuildServiceProviderClient();
+            _subscriptionService = new SubscriptionService(_serviceProviderClient);
+
+            while (true)
+            {
+                _menu.PrintMenu(new MainMenu.ServiceProviderOption());
+                var input = Console.ReadLine();
+                if (int.TryParse(input, out _selectedMenuOptions))
+                {
+                    switch (_selectedMenuOptions)
+                    {
+                        case (int)MainMenu.ServiceProviderOption.GetCustomers:
+                        {
+                            _subscriptionService.GetCustomers();
+                            break;
+                        }
+                        case (int)MainMenu.ServiceProviderOption.GetSubscriptions:
+                        {
+                            Console.WriteLine("Enter CustomerId :");
+                            var customerId = Console.ReadLine();
+                            if (!string.IsNullOrWhiteSpace(customerId))
+                            {
+                                _subscriptionService.GetSubscriptions(new Guid(customerId));
+                            }
+
+                            break;
+                        }
+                        case (int)MainMenu.ServiceProviderOption.GetSubscriptionsAmendmentStatus:
+                        {
+                            Console.WriteLine("Enter Subscription AmendmentId :");
+                            var subscriptionsAmendmentId = Console.ReadLine();
+                            if (!string.IsNullOrWhiteSpace(subscriptionsAmendmentId))
+                            {
+                                _subscriptionService.GetAmendmentStatus(new Guid(subscriptionsAmendmentId));
+                            }
+
+                            break;
+                        }
+                        case 0:
+                        {
+                            return;
+                        }
+                        default:
+                        {
+                            Console.WriteLine("Try again!!");
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Try again!!");
+                }
             }
         }
     }
